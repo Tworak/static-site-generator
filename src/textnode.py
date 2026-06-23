@@ -1,38 +1,44 @@
+from htmlnode import LeafNode
 from enum import Enum
 
+
 class TextType(Enum):
-    # Basic types of textual content that the static site generator may
-    # encounter.  The enum is intentionally minimal; additional members can
-    # be added as needed.
     TEXT = "text"
-    LINK = "link"
     BOLD = "bold"
-    CODE = "code"
-    IMAGE = "image"
     ITALIC = "italic"
+    CODE = "code"
+    LINK = "link"
+    IMAGE = "image"
 
 
 class TextNode:
-    def __init__(self, text: str, text_type: TextType, url: str | None = None):
+    def __init__(self, text: str, text_type: TextType, url: str | None = None) -> None:
         self.text = text
         self.text_type = text_type
         self.url = url
-    
-    def __eq__(self, other):
-        """Return ``True`` when *other* is a :class:`TextNode` with the same
-        attributes.
 
-        The previous implementation compared ``self`` to ``other`` using
-        ``==`` which called this very method again, leading to infinite
-        recursion.  We now perform an explicit attribute comparison.
-        """
-        if not isinstance(other, TextNode):
-            return NotImplemented
+    def __eq__(self, other: "TextNode") -> bool:
         return (
-            self.text == other.text and
-            self.text_type == other.text_type and
-            self.url == other.url
+            self.text_type == other.text_type
+            and self.text == other.text
+            and self.url == other.url
         )
 
     def __repr__(self) -> str:
-            return f"TextNode({self.text}, {self.text_type.value}, {self.url})"
+        return f"TextNode({self.text}, {self.text_type.value}, {self.url})"
+
+
+def text_node_to_html_node(text_node: TextNode) -> LeafNode:
+    if text_node.text_type == TextType.TEXT:
+        return LeafNode(None, text_node.text)
+    if text_node.text_type == TextType.BOLD:
+        return LeafNode("b", text_node.text)
+    if text_node.text_type == TextType.ITALIC:
+        return LeafNode("i", text_node.text)
+    if text_node.text_type == TextType.CODE:
+        return LeafNode("code", text_node.text)
+    if text_node.text_type == TextType.LINK:
+        return LeafNode("a", text_node.text, {"href": text_node.url})
+    if text_node.text_type == TextType.IMAGE:
+        return LeafNode("img", "", {"src": text_node.url, "alt": text_node.text})
+    raise ValueError(f"invalid text type: {text_node.text_type}")
